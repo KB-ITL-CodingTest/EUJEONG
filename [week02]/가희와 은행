@@ -1,0 +1,59 @@
+import java.io.*;
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        BufferedReader bf = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer st = new StringTokenizer(bf.readLine());
+
+        Queue<int[]> q = new LinkedList<>(); // [id, 남은 시간]
+        int N = Integer.parseInt(st.nextToken());
+        int T = Integer.parseInt(st.nextToken());
+        int W = Integer.parseInt(st.nextToken());
+
+        for (int i = 0; i < N; i++) {
+            st = new StringTokenizer(bf.readLine());
+            int id = Integer.parseInt(st.nextToken());
+            int t = Integer.parseInt(st.nextToken());
+            q.add(new int[]{id, t});
+        }
+
+        int M = Integer.parseInt(bf.readLine());
+        Map<Integer, int[]> future = new HashMap<>(); // key: 도착 시간, value: [id, t]
+
+        for (int i = 0; i < M; i++) {
+            st = new StringTokenizer(bf.readLine());
+            int id = Integer.parseInt(st.nextToken());
+            int t = Integer.parseInt(st.nextToken());
+            int c = Integer.parseInt(st.nextToken());
+            future.put(c, new int[]{id, t});
+        }
+
+        int cnt = 0; // 현재 고객 처리한 시간
+
+        for (int i = 0; i < W; i++) {
+            // i초에 들어오는 손님이 있다면 추가
+            if (future.containsKey(i)) {
+                q.add(future.get(i));
+            }
+
+            int[] now = q.peek(); // 현재 고객
+
+            // 처리 다 끝났으면 제거하고, cnt 초기화
+            if (now[1] - cnt == 0) {
+                q.poll();
+                cnt = 0;
+                now = q.peek(); // 다음 고객으로
+            } else if (cnt == T) {
+                // T초만큼 처리하고도 업무 남았으면 맨 뒤로
+                q.poll();
+                q.add(new int[]{now[0], now[1] - cnt});
+                cnt = 0;
+                now = q.peek(); // 다음 고객
+            }
+
+            System.out.println(q.peek()[0]); // 현재 처리 중인 고객 ID
+            cnt++;
+        }
+    }
+}
