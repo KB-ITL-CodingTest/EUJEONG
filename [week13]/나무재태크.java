@@ -2,7 +2,6 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    // 8방향
     static final int[] dx = {-1,-1,-1, 0, 0, 1, 1, 1};
     static final int[] dy = {-1, 0, 1,-1, 1,-1, 0, 1};
 
@@ -11,101 +10,88 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
         int n = Integer.parseInt(st.nextToken());
         int m = Integer.parseInt(st.nextToken());
-        int k = Integer.parseInt(st.nextToken());
+        int K = Integer.parseInt(st.nextToken());
 
         // 1) 양분 초기화
         int[][] nutrients = new int[n][n];
-        int[][] A = new int[n][n];  // 겨울마다 추가될 양분
+        int[][] A = new int[n][n];
         for (int i = 0; i < n; i++) {
             Arrays.fill(nutrients[i], 5);
-        }
-        for (int i = 0; i < n; i++) {
             st = new StringTokenizer(br.readLine());
-            for (int j = 0; j < n; j++) {
+            for (int j = 0; j < n; j++)
                 A[i][j] = Integer.parseInt(st.nextToken());
-            }
         }
 
-        // 2) 칸별 PriorityQueue 생성
-        PriorityQueue<Integer>[][] pq = new PriorityQueue[n][n];
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                pq[i][j] = new PriorityQueue<>();  // 오름차순
-            }
-        }
+        // 2) 칸별 나무 리스트 초기화
+        LinkedList<Integer>[][] trees = new LinkedList[n][n];
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                trees[i][j] = new LinkedList<>();
 
-        // 3) 초기 바이러스 입력
+        // 3) 초기 나무 입력
         for (int i = 0; i < m; i++) {
             st = new StringTokenizer(br.readLine());
             int x = Integer.parseInt(st.nextToken()) - 1;
             int y = Integer.parseInt(st.nextToken()) - 1;
             int age = Integer.parseInt(st.nextToken());
-            pq[x][y].offer(age);
+            trees[x][y].add(age);
         }
 
-        // 4) k년 반복
-        for (int year = 0; year < k; year++) {
-            // 봄·여름: 살아남은 나무, 그리고 죽은 나무가 남긴 양분 계산
-            int[][] deadNutrients = new int[n][n];
+        // 4) K년 시뮬레이션
+        for (int year = 0; year < K; year++) {
+            // —— 봄 & 여름 ——  
+            int[][] addNutr = new int[n][n];
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++) {
-                    if (pq[i][j].isEmpty()) continue;
-                    PriorityQueue<Integer> tmp = new PriorityQueue<>();
-                    while (!pq[i][j].isEmpty()) {
-                        int age = pq[i][j].poll();
+                    if (trees[i][j].isEmpty()) continue;
+                    LinkedList<Integer> survivors = new LinkedList<>();
+                    for (int age : trees[i][j]) {
                         if (nutrients[i][j] >= age) {
                             nutrients[i][j] -= age;
-                            tmp.offer(age + 1);
+                            survivors.add(age + 1);
                         } else {
-                            deadNutrients[i][j] += age / 2;
+                            addNutr[i][j] += age / 2;
                         }
                     }
-                    pq[i][j] = tmp;
+                    trees[i][j] = survivors;
                 }
             }
-            // 여름: 죽은 나무 양분 추가
-            for (int i = 0; i < n; i++) {
-                for (int j = 0; j < n; j++) {
-                    nutrients[i][j] += deadNutrients[i][j];
-                }
-            }
+            // 여름: 죽은 나무 양분으로 추가
+            for (int i = 0; i < n; i++)
+                for (int j = 0; j < n; j++)
+                    nutrients[i][j] += addNutr[i][j];
 
-            // 가을: 번식
-            List<int[]> toAdd = new ArrayList<>();
+            // —— 가을 번식 ——  
+            List<int[]> births = new ArrayList<>();
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++) {
-                    for (int age : pq[i][j]) {
+                    for (int age : trees[i][j]) {
                         if (age % 5 == 0) {
                             for (int d = 0; d < 8; d++) {
                                 int ni = i + dx[d], nj = j + dy[d];
-                                if (ni >= 0 && ni < n && nj >= 0 && nj < n) {
-                                    toAdd.add(new int[]{ni, nj});
-                                }
+                                if (ni >= 0 && ni < n && nj >= 0 && nj < n)
+                                    births.add(new int[]{ni, nj});
                             }
                         }
                     }
                 }
             }
-            // 번식된 나무 삽입
-            for (int[] cell : toAdd) {
-                pq[cell[0]][cell[1]].offer(1);
-            }
+            // 번식 나무 나이 1 삽입 (앞쪽에)
+            for (int[] b : births)
+                trees[b[0]][b[1]].addFirst(1);
 
-            // 겨울: 양분 추가
-            for (int i = 0; i < n; i++) {
-                for (int j = 0; j < n; j++) {
+            // —— 겨울 추가 양분 ——  
+            for (int i = 0; i < n; i++)
+                for (int j = 0; j < n; j++)
                     nutrients[i][j] += A[i][j];
-                }
-            }
         }
 
-        // 최종 개수 세기
+        // 결과 계산: 살아남은 나무 수
         int result = 0;
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                result += pq[i][j].size();
-            }
-        }
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                result += trees[i][j].size();
+
         System.out.println(result);
     }
 }
