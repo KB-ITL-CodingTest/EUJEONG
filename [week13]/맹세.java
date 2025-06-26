@@ -32,7 +32,6 @@ public class w13_맹세 {
         System.out.print(sb);
     }
 
-    // 문자열이 주기율표 심볼로 분해 가능한지 DP로 확인
     static boolean canSpell(String str) {
         int len = str.length();
         boolean[] dp = new boolean[len + 1];
@@ -40,11 +39,9 @@ public class w13_맹세 {
 
         for (int i = 0; i < len; i++) {
             if (!dp[i]) continue;
-            // 1글자 심볼 체크
             if (SYMBOLS.contains(str.substring(i, i + 1))) {
                 dp[i + 1] = true;
             }
-            // 2글자 심볼 체크
             if (i + 2 <= len && SYMBOLS.contains(str.substring(i, i + 2))) {
                 dp[i + 2] = true;
             }
